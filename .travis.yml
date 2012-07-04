@@ -1,0 +1,4 @@
+language: erlang
+script: "make all"
+otp_release:
+  - R15B01
