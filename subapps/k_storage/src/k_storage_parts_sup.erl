@@ -37,7 +37,7 @@ init([]) ->
 				{k_storage_parts_mgr, start_link, [in_to_out]}, permanent, 10000, worker, [k_storage_parts_mgr]},
 			{out_to_in_id,
 				{k_storage_parts_mgr, start_link, [out_to_in]}, permanent, 10000, worker, [k_storage_parts_mgr]},
-			{dlr_msg_status_id,
-				{k_storage_parts_mgr, start_link, [dlr_msg_status]}, permanent, 10000, worker, [k_storage_parts_mgr]}
+			{incoming_msg_info,
+				{k_storage_parts_mgr, start_link, [incoming_msg_info]}, permanent, 10000, worker, [k_storage_parts_mgr]}
 		]}
 	}.

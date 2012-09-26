@@ -1,20 +1,31 @@
 -ifndef(msg_info_hrl).
 -define(msg_info_hrl, included).
 
--include_lib("k_common/include/JustAsn.hrl").
-
 -type encoding() :: {atom(), atom()}.
--type source_addr() :: #'FullAddr'{}.
--type dest_addr() :: #'FullAddr'{} | #'FullAddrAndRefNum'{}.
+
+-record(full_addr, {
+	addr :: string(),
+	ton :: integer(),
+	npi :: integer()
+}).
+
+-record(full_addr_ref_num, {
+	full_addr :: #full_addr{},
+	ref_num :: integer()
+}).
+
+-type src_addr() :: #full_addr{}.
+-type dst_addr() :: #full_addr{} | #full_addr_ref_num{}.
 
 -record(msg_info, {
 	id :: string(),
+	gateway_id :: string(),
 	customer_id :: string(),
 	type :: atom(),
 	encoding :: encoding(),
 	body :: binary(),
-	source_addr :: source_addr(),
-	dest_addr :: dest_addr(),
+	src_addr :: src_addr(),
+	dst_addr :: dst_addr(),
 	registered_delivery :: boolean()
 }).
 

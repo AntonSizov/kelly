@@ -1,5 +1,4 @@
-{application, k_storage,
- [
+{application, k_storage, [
   {description, ""},
   {vsn, "1"},
   {registered, []},
@@ -7,8 +6,8 @@
                   kernel,
                   stdlib,
                   k_common,
-                  k_gen_storage
+                  kv_storage
                  ]},
-  {mod, {k_storage_app, []} },
+  {mod, {k_storage_app, []}},
   {env, []}
  ]}.

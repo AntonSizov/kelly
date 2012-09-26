@@ -65,7 +65,7 @@ unregister_subscription(CustomerID, UserID, SubscriptionID) ->
 		{ok, SubscriptionID :: subscription_id()} |
 		{error, no_subscription}.
 get_subscription(CustomerID, UserID, ContentType) ->
-	gen_server:call(?MODULE, {get_sub, CustomerID, UserID, ContentType}).
+	gen_server:call(?MODULE, {get_sub, CustomerID, UserID, ContentType}, infinity).
 
 %% ===================================================================
 %% GenServer Function Definitions
@@ -83,7 +83,7 @@ handle_call({get_sub, CustomerID, UserID, ContentType}, _From,
 	State = #state{storage = TableID}) ->
 	Customer = get_customer(TableID, CustomerID, UserID),
 	Reply = get_subscription(ContentType, Customer#customer_map.map),
-	?log_debug("ContentType: ~p, customer.map: ~p", [ContentType, Customer#customer_map.map]),
+	%% ?log_debug("ContentType: ~p, customer.map: ~p", [ContentType, Customer#customer_map.map]),
 	set_flag(Reply, Customer, TableID),
 	{reply, Reply, State};
 

@@ -17,30 +17,32 @@ start(_StartType, _StartArgs) ->
 	Dispatch = [
     %% {Host, list({Path, Handler, Opts})}
     	{'_', [
-            {[<<"message_status">>, '_', <<"customer">>, '_'], gen_cowboy_restful, [k_http_api_handler_message_status]},
-            {[<<"gateway">>, '_', <<"connection">>, '_'], gen_cowboy_restful, [k_http_api_handler_connections]},
-            {[<<"gateway">>, '_', <<"connection">>], gen_cowboy_restful, [k_http_api_handler_connections]},
-            {[<<"gateway">>, '_'], gen_cowboy_restful, [k_http_api_handler_gateways]},
-            {[<<"gateway">>], gen_cowboy_restful, [k_http_api_handler_gateways]},
-            {[<<"gateways">>], gen_cowboy_restful, [k_http_api_handler_gateways]},
-            {[<<"customer">>, '_', <<"user">>, '_'], gen_cowboy_restful, [k_http_api_handler_users]},
-            {[<<"customer">>, '_', <<"user">>], gen_cowboy_restful, [k_http_api_handler_users]},
-            {[<<"customer">>, '_'], gen_cowboy_restful, [k_http_api_handler_customers]},
-            {[<<"customer">>], gen_cowboy_restful, [k_http_api_handler_customers]},
-            {[<<"customers">>], gen_cowboy_restful, [k_http_api_handler_customers]},
-            {[<<"network">>, '_'], gen_cowboy_restful, [k_http_api_handler_networks]},
-            {[<<"network">>], gen_cowboy_restful, [k_http_api_handler_networks]},
-            {[<<"networks">>], gen_cowboy_restful, [k_http_api_handler_networks]},
-            {[<<"provider">>, '_'], gen_cowboy_restful, [k_http_api_handler_providers]},
-            {[<<"provider">>], gen_cowboy_restful, [k_http_api_handler_providers]},
-            {[<<"providers">>], gen_cowboy_restful, [k_http_api_handler_providers]},
-			{[<<"report">>, <<"gateways">>], gen_cowboy_restful, [k_http_api_handler_gtw_stats]},
-			{[<<"report">>, <<"uplink">>], gen_cowboy_restful, [k_http_api_handler_uplink_stats]},
-			{[<<"report">>, <<"downlink">>], gen_cowboy_restful, [k_http_api_handler_downlink_stats]},
-            {[<<"report">>, '_'], gen_cowboy_restful, [k_http_api_handler_reports]},
-		    {[<<"addr2cust">>], gen_cowboy_restful, [k_http_api_handler_addr2cust]},
-            {[<<"gui">>, '...'], gen_cowboy_restful, [k_http_api_handler_gui]},
-    		{'_', error_request_handler, []}
+			%% REST API
+            {[<<"gateways">>, '_', <<"connections">>, '...'], gen_http_api, [k_http_api_handler_connections]},
+            {[<<"gateways">>, '...'], gen_http_api, [k_http_api_handler_gateways]},
+            {[<<"customers">>, '_', <<"users">>, '...'], gen_http_api, [k_http_api_handler_users]},
+            {[<<"customers">>, '...'], gen_http_api, [k_http_api_handler_customers]},
+            {[<<"networks">>, '...'], gen_http_api, [k_http_api_handler_networks]},
+            {[<<"providers">>, '...'], gen_http_api, [k_http_api_handler_providers]},
+		    {[<<"addr2cust">>, '...'], gen_http_api, [k_http_api_handler_addr2cust]},
+			%% STATISTIC API
+            {[<<"message_status">>, '_', <<"customer">>, '...'], gen_http_api, [k_http_api_handler_message_status]},
+			{[<<"report">>, <<"uplink">>], gen_http_api, [k_http_api_handler_uplink_stats]},
+			{[<<"report">>, <<"downlink">>], gen_http_api, [k_http_api_handler_downlink_stats]},
+			{[<<"report">>, <<"statuses">>], gen_http_api, [k_http_api_handler_statuses_stats]},
+            {[<<"report">>, <<"messages">>, '_'], gen_http_api, [k_http_api_handler_msg_stats]},
+
+			%% GUI
+            {[<<"gui">>], k_http_api_gui_index_router, []}, %% redirect to Index.html
+			{[<<"gui">>, '...'], cowboy_http_static,
+				[{directory, <<"./gui">>},
+				{mimetypes, [
+					{<<".css">>, [<<"text/css">>]},
+					{<<".js">>, [<<"application/javascript">>]},
+					{<<".html">>, [<<"text/html">>]}]}]},
+
+			%% Others handler
+    		{'...', error_request_handler, []}
     	]}
 	],
 	%% Name, NbAcceptors, Transport, TransOpts, Protocol, ProtoOpts

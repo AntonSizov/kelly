@@ -1,84 +1,103 @@
 -module(k_http_api_handler_addr2cust).
 
--behaviour(gen_cowboy_restful).
+-behaviour(gen_http_api).
 
--export([init/3, handle/3, terminate/2]).
+-export([
+	init/0,
+	create/1,
+	read/1,
+	update/1,
+	delete/1
+]).
 
+-include_lib("gen_http_api/include/crud_specs.hrl").
 -include_lib("k_common/include/logging.hrl").
 -include_lib("k_mailbox/include/address.hrl").
--include("gen_cowboy_restful_spec.hrl").
 
--record(state, {
-}).
+%% ===================================================================
+%% Callback Functions
+%% ===================================================================
 
-%%% REST parameters
--record(get, {
-	addr = {mandatory, <<"addr">>, list},
-	ton = {mandatory, <<"ton">>, integer},
-	npi = {mandatory, <<"npi">>, integer}
-}).
+init() ->
+	Read = [#method_spec{
+				path = [<<"addr2cust">>, msisdn],
+				params = [#param{name = msisdn, mandatory = true, repeated = false, type = addr}]},
+			#method_spec{
+				path = [<<"addr2cust">>],
+				params = [#param{name = customer, mandatory = true, repeated = false, type = binary_uuid},
+						  #param{name = user, mandatory = true, repeated = false, type = binary}]}
+			],
+	DeleteParams = [
+		#param{name = msisdn, mandatory = true, repeated = false, type = addr}
+	],
+	Delete = #method_spec{
+				path = [<<"addr2cust">>, msisdn],
+				params = DeleteParams},
 
--record(create, {
-	addr = {mandatory, <<"addr">>, list},
-	ton = {mandatory, <<"ton">>, integer},
-	npi = {mandatory, <<"npi">>, integer},
-	cid = {mandatory, <<"cid">>, list},
-	user = {mandatory, <<"user">>, list}
-}).
+	CreateParams = [
+		#param{name = msisdn, mandatory = true, repeated = false, type = addr},
+		#param{name = customer,	mandatory = true, repeated = false,	type = binary_uuid},
+		#param{name = user, mandatory = true, repeated = false, type = binary}
+	],
+	Create = #method_spec{
+				path = [<<"addr2cust">>],
+				params = CreateParams},
 
--record(update, {
-}).
+		{ok, #specs{
+			create = Create,
+			read = Read,
+			update = undefined,
+			delete = Delete
+		}}.
 
--record(delete, {
-	addr = {mandatory, <<"addr">>, list},
-	ton = {mandatory, <<"ton">>, integer},
-	npi = {mandatory, <<"npi">>, integer}
-}).
+read(Params) ->
+	case ?gv(msisdn, Params) of
+		undefined -> get_customer_user_msisdns(Params);
+		Msisdn -> get_msisdn(Msisdn)
+	end.
 
-init(_Req, 'GET', _Path) ->
-	{ok, #get{}, #state{}};
+get_customer_user_msisdns(Params) ->
+	Customer = ?gv(customer, Params),
+	User = ?gv(user, Params),
+	{ok, MsisdnsList} = k_addr2cust:available_addresses(Customer, User),
+	Response = prepare_msisdns(Customer, User, MsisdnsList),
+	{ok, Response}.
 
-init(_Req, 'POST', _Path) ->
-	{ok, #create{}, #state{}};
+get_msisdn(Msisdn) ->
+	case k_addr2cust:resolve(Msisdn) of
+		{error, addr_not_used} ->
+			{exception, 'svc0003'};
+		{ok, CustomerID, UserID} ->
+			Response = prepare(CustomerID, UserID, Msisdn),
+			{ok, Response}
+	end.
 
-init(_Req, 'PUT', _Path) ->
-	{ok, #update{}, #state{}};
+create(Params) ->
+	Msisdn = ?gv(msisdn, Params),
+	CustomerID = ?gv(customer, Params),
+	UserID = ?gv(user, Params),
+	case k_addr2cust:link(Msisdn, CustomerID, UserID) of
+		ok ->
+			Response = prepare(CustomerID, UserID, Msisdn),
+			{http_code, 201, Response};
+		{error, addr_in_use} ->
+			{exception, 'svc0004'}
+	end.
 
-init(_Req, 'DELETE', _Path) ->
-	{ok, #delete{}, #state{}};
+update(_Params) ->
+	ok.
 
-init(_Req, HttpMethod, Path) ->
-	?log_error("bad_request~nHttpMethod: ~p~nPath: ~p", [HttpMethod, Path]),
-	{error, bad_request}.
+delete(Params) ->
+	Msisdn = ?gv(msisdn, Params),
+	k_addr2cust:unlink(Msisdn),
+	{http_code, 204}.
 
-handle(_Req, #get{
-				addr = Addr,
-				ton = Ton,
-				npi = Npi
-			}, State = #state{}) ->
-	Response = k_addr2cust:resolve(#addr{addr=Addr, ton=Ton, npi=Npi}),
-	{ok, Response, State};
+%% ===================================================================
+%% Local Functions
+%% ===================================================================
 
-handle(_Req, #create{
-				addr = Addr,
-				ton = Ton,
-				npi = Npi,
-				cid = CustID
-					}, State = #state{}) ->
-	UserID = undefined,
-	Result = k_addr2cust:link(#addr{addr=Addr, ton=Ton, npi=Npi}, CustID, UserID),
-	{ok, {result, Result}, State};
+prepare(CustomerID, UserID, Msisdn) ->
+	[{msisdn, [{addr, Msisdn#addr.addr}, {ton, Msisdn#addr.ton}, {npi, Msisdn#addr.npi}]}, {customer, list_to_binary(uuid:to_string(CustomerID))}, {user, UserID}].
 
-handle(_Req, #update{}, State = #state{}) ->
-	{ok, {result, error}, State};
-
-handle(_Req, #delete{
-				addr = Addr,
-				ton = Ton,
-				npi = Npi
-					}, State = #state{}) ->
-	Result = k_addr2cust:unlink(#addr{addr=Addr, ton=Ton, npi=Npi}),
-	{ok, {result, Result}, State}.
-
-terminate(_Req, _State = #state{}) ->
-    ok.
+prepare_msisdns(CustomerID, UserID, Msisdns) ->
+	[{msisdns, [[{addr, Msisdn#addr.addr}, {ton, Msisdn#addr.ton}, {npi, Msisdn#addr.npi}] || Msisdn <- Msisdns]}, {customer, list_to_binary(uuid:to_string(CustomerID))}, {user, UserID}].

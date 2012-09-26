@@ -1,39 +1,59 @@
 -module(k_http_api_handler_message_status).
 
--behaviour(gen_cowboy_restful).
+-behaviour(gen_http_api).
 
--export([init/3, handle/3, terminate/2]).
+%% gen_cowboy_crud callbacks
+-export([
+	init/0,
+	create/1,
+	read/1,
+	update/1,
+	delete/1
+]).
 
--include("gen_cowboy_restful_spec.hrl").
+-include_lib("gen_http_api/include/crud_specs.hrl").
 -include_lib("k_common/include/logging.hrl").
 -include_lib("k_common/include/msg_status.hrl").
 
--record(state, {
-	mesid :: string(),
-	custid :: string()
-}).
+%% ===================================================================
+%% gen_cowboy_crud callbacks
+%% ===================================================================
 
-%%% REST parameters
--record(get, {
-}).
+init() ->
+	Read = #method_spec{
+				path = [<<"message_status">>, message_id, <<"customer">>, customer_id],
+				params = [
+					#param{name = message_id, mandatory = true, repeated = false, type = binary},
+					#param{name = customer_id, mandatory = true, repeated = false, type = binary_uuid}
+				]},
 
-init(_Req, 'GET', [<<"message_status">>, MesBinId, <<"customer">>, CustUUIDBin]) ->
-	MesId = binary_to_list(MesBinId),
-	CustUUID = binary_to_list(CustUUIDBin),
-	{ok, #get{}, #state{mesid = MesId, custid = CustUUID}};
+	{ok, #specs{
+		create = undefined,
+		read = Read,
+		update = undefined,
+		delete = undefined
+	}}.
 
-init(_Req, HttpMethod, Path) ->
-	?log_debug("bad_request~nHttpMethod: ~p~nPath: ~p", [HttpMethod, Path]),
-	{error, bad_request}.
-
-handle(_Req, #get{}, State = #state{mesid = MesId, custid = CustUUID}) ->
-	case k_storage_api:get_msg_status({CustUUID, MesId}) of
+read(Params) ->
+	?log_debug("Params: ~p", [Params]),
+	MsgId = ?gv(message_id, Params),
+	CustId = ?gv(customer_id, Params),
+	case k_storage:get_msg_status({CustId, MsgId}) of
 		{ok, #msg_status{status = Status}} ->
-			Response = {message, [{customer_id, CustUUID}, {message_id, MesId}, {status, Status}]};
-		Any ->
-			Response = Any
-	end,
-	{ok, Response, State}.
+			{ok, {message, [
+				{customer_id, list_to_binary(uuid:to_string(CustId))},
+				{message_id, MsgId},
+				{status, Status}
+			]}};
+		{error, no_entry} ->
+			{exception, 'svc0003'}
+	end.
 
-terminate(_Req, _State = #state{}) ->
-    ok.
+create(_Params) ->
+	ok.
+
+update(_Params) ->
+	ok.
+
+delete(_Params) ->
+	ok.

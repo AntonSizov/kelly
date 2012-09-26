@@ -7,7 +7,9 @@
                   kernel,
                   stdlib,
                   lager,
-                  sync
+				  rmql,
+                  sync,
+				  uuid
                  ]},
   {mod, {k_common_app, []}},
   {env, []}
