@@ -3,6 +3,7 @@ script: "make ci"
 before_install:
  - sudo apt-get update -qq
  - sudo apt-get install -qq libwww-perl
+ - sudo apt-get install -qq libtokyocabinet-dev
 services:
   - mongodb
   - rabbitmq
