@@ -56,11 +56,11 @@ ci: funnel kannel smppsim just generate
 	mongo --eval 's = db.stats(); printjson(s)'
 
 funnel:
-	wget https://dl.dropbox.com/u/85105941/funnel_mini_ubuntu12.10_x86_64.tar.gz
-	tar xzf funnel_mini_ubuntu12.10_x86_64.tar.gz
-	./funnel_mini/bin/funnel start
-	sleep 3
-	./funnel_mini/bin/funnel ping
+	# eval "wget https://dl.dropbox.com/u/85105941/funnel_mini_ubuntu12.10_x86_64.tar.gz"
+	# tar xzf funnel_mini_ubuntu12.10_x86_64.tar.gz
+	# ./funnel_mini/bin/funnel start
+	# sleep 3
+	# ./funnel_mini/bin/funnel ping
 
 kannel:
 
@@ -70,13 +70,13 @@ smppsim:
 	chmod +x ./SMPPSim/startsmppsim.sh
 	cp ./rel/files/smppsim.props ./SMPPSim/conf/
 	./SMPPSim/startsmppsim.sh 2> ./SMPPSim/smppsim.log &
+	cat ./SMPPSim/smppsim.log
 
 just:
 	eval "git clone https://github.com/PowerMeMobile/just_mini_rel.git"
-	make -f ./just_mini_rel/Makefile make
-	./just_mini_rel/just_mini/bin/just start
+	cd ./just_mini_rel/
+	make
+	./just_mini/bin/just start
 	sleep 3
-	./just_mini_rel/just_mini/bin/just ping
-
-set-env:
-	@./rel/files/setup_ci_environment
+	./just_mini/bin/just ping
+	cd ..
