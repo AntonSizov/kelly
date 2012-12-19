@@ -1,5 +1,8 @@
 language: erlang
-script: "make all"
+script: "make"
+services:
+  - mongodb
+  - rabbitmq
 otp_release:
   - R15B01
 # whitelist
@@ -7,7 +10,7 @@ branches:
   only:
     - master
     - develop
+	- travis
 notifications:
   email:
     - a.sizov@dev1team.net
-    - d.klionsky@dev.powermemobile.com
