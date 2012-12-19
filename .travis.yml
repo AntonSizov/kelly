@@ -1,11 +1,13 @@
 language: erlang
 script: "make ci"
+before_install:
+ - sudo apt-get update -qq
+ - sudo apt-get install -qq libwww-perl
 services:
   - mongodb
   - rabbitmq
 otp_release:
   - R15B01
-# whitelist
 branches:
   only:
     - master
