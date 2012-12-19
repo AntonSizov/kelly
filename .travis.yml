@@ -1,5 +1,5 @@
 language: erlang
-script: "make all"
+script: "make ci"
 services:
   - mongodb
   - rabbitmq

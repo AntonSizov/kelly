@@ -46,8 +46,11 @@ release: generate
 update-deps:
 	./rebar update-deps
 
-ci: set-env
-
+ci: generate
+	./rel/$(NAME)/bin/$(NAME) start
+	sleep 2
+	./rel/$(NAME)/bin/$(NAME) ping
+	./rel/files/kelly_http_configure
 
 set-env:
 	@./rel/files/setup_ci_environment
