@@ -45,3 +45,9 @@ release: generate
 
 update-deps:
 	./rebar update-deps
+
+ci: set-env
+
+
+set-env:
+	@./rel/files/setup_ci_environment
