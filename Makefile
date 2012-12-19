@@ -51,6 +51,9 @@ ci: generate
 	sleep 2
 	./rel/$(NAME)/bin/$(NAME) ping
 	./rel/files/kelly_http_configure
+	cat ./rel/$(NAME)/log/error.log
+	eval "lsof -l :8080"
+	mongo --eval 's = db.stats(); printjson(s)'
 
 set-env:
 	@./rel/files/setup_ci_environment
