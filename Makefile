@@ -75,6 +75,6 @@ smppsim:
 just:
 	eval "git clone https://github.com/PowerMeMobile/just_mini_rel.git"
 	make -C ./just_mini_rel
-	./just_mini_rel/bin/just start
+	./just_mini_rel/just_mini/bin/just start
 	sleep 3
-	./just_mini_rel/bin/just ping
+	./just_mini_rel/just_mini/bin/just ping
