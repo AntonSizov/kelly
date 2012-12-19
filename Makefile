@@ -46,14 +46,37 @@ release: generate
 update-deps:
 	./rebar update-deps
 
-ci: generate
+ci: funnel kannel smppsim just generate
 	./rel/$(NAME)/bin/$(NAME) start
 	sleep 2
 	./rel/$(NAME)/bin/$(NAME) ping
 	./rel/files/kelly_http_configure
 	cat ./rel/$(NAME)/log/error.log
-	eval "lsof -l :8080"
+	eval "lsof -i :8080"
 	mongo --eval 's = db.stats(); printjson(s)'
+
+funnel:
+	wget https://dl.dropbox.com/u/85105941/funnel_mini_ubuntu12.10_x86_64.tar.gz
+	tar xzf funnel_mini_ubuntu12.10_x86_64.tar.gz
+	./funnel_mini/bin/funnel start
+	sleep 3
+	./funnel_mini/bin/funnel ping
+
+kannel:
+
+smppsim:
+	eval "wget https://dl.dropbox.com/u/85105941/SMPPSim.tar.gz"
+	tar xzf ./SMPPSim.tar.gz
+	chmod +x ./SMPPSim/startsmppsim.sh
+	cp ./rel/files/smppsim.props ./SMPPSim/conf/
+	./SMPPSim/startsmppsim.sh 2> ./SMPPSim/smppsim.log &
+
+just:
+	eval "git clone https://github.com/PowerMeMobile/just_mini_rel.git"
+	make -f ./just_mini_rel/Makefile make
+	./just_mini_rel/just_mini/bin/just start
+	sleep 3
+	./just_mini_rel/just_mini/bin/just ping
 
 set-env:
 	@./rel/files/setup_ci_environment
