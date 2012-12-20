@@ -52,8 +52,11 @@ ci: funnel kannel smppsim just generate
 	./rel/$(NAME)/bin/$(NAME) ping
 	./rel/files/kelly_http_configure
 	cat ./rel/$(NAME)/log/error.log
-	eval "lsof -i :8080"
+	# eval "lsof -i :8080"
+	which mongo
 	mongo --eval 's = db.stats(); printjson(s)'
+	which rabbitmqctl
+	rabbitmqctl list_queues
 
 funnel:
 	# eval "wget https://dl.dropbox.com/u/85105941/funnel_mini_ubuntu12.10_x86_64.tar.gz"
